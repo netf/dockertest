@@ -490,7 +490,8 @@ func OpenCassandraContainerConnection(tries int, delay time.Duration) (c Contain
 		log.Printf("Try %d: Connecting %s", try, node)
 
 		cluster := gocql.NewCluster(ip)
-		cluster.Keyspace = "keyspace1"
+		cluster.Keyspace = "system"
+		cluster.Port = port
 		cluster.Consistency = gocql.Quorum
 		session, _ := cluster.CreateSession()
 		if err := session.Query(`SELECT COUNT(*) FROM system.local`).Exec(); err == nil {

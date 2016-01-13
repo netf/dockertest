@@ -1,15 +1,24 @@
 package dockertest_test
 
 import (
+	"database/sql"
+	. "dockertest"
+	"fmt"
 	"log"
+	"net/http"
+	"strings"
 	"testing"
 	"time"
 
-	. "github.com/netf/dockertest"
+	"gopkg.in/mgo.v2"
+	// . "github.com/netf/dockertest"
+
+	"github.com/garyburd/redigo/redis"
+	"github.com/mattbaird/elastigo/lib"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-/*
 func TestOpenPostgreSQLContainerConnection(t *testing.T) {
 	c, db, err := OpenPostgreSQLContainerConnection(15, time.Millisecond*500)
 	require.Nil(t, err)
@@ -61,24 +70,32 @@ func TestOpenRedisContainerConnection(t *testing.T) {
 	defer client.Close()
 }
 
-*/
 func TestOpenCassandraContainerConnection(t *testing.T) {
 	c, session, err := OpenCassandraContainerConnection(15, time.Millisecond*500)
 	require.Nil(t, err)
 	defer c.KillRemove()
 	require.NotNil(t, session)
 
-	if err := session.Query(`INSERT INTO greeting (text) VALUES (?)`,
-		"hello world").Exec(); err != nil {
+	if err := session.Query(`CREATE KEYSPACE keyspace1 WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 1}`).Exec(); err != nil {
 		log.Fatal(err)
 	}
+	if err := session.Query(`CREATE TABLE keyspace1.test (value text PRIMARY KEY)`).Exec(); err != nil {
+		log.Fatal(err)
+	}
+	if err := session.Query(`INSERT INTO keyspace1.test (value) VALUES ('Hello, World!')`).Exec(); err != nil {
+		log.Fatal(err)
+	}
+	var v string
+	if err := session.Query(`SELECT value FROM keyspace1.test`).Scan(&v); err != nil {
+		log.Fatal(err)
+	}
+
 	require.Nil(t, err)
-	// assert.Equal(t, "Hello, World!", v)
+	assert.Equal(t, "Hello, World!", v)
 
 	defer session.Close()
 }
 
-/*
 func TestOpenNSQLookupdContainerConnection(t *testing.T) {
 
 	c, ip, tcpPort, httpPort, err := OpenNSQLookupdContainerConnection(15, time.Millisecond*500)
@@ -213,4 +230,3 @@ func TestConnectToNSQd(t *testing.T) {
 	require.Nil(t, err)
 	defer c.KillRemove()
 }
-*/
