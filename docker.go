@@ -492,12 +492,11 @@ func OpenCassandraContainerConnection(tries int, delay time.Duration) (c Contain
 		cluster := gocql.NewCluster(ip)
 		cluster.Keyspace = "keyspace1"
 		cluster.Consistency = gocql.Quorum
-		session, err := cluster.CreateSession()
-		if err == nil {
+		session, _ := cluster.CreateSession()
+		if err := session.Query(`SELECT COUNT(*) FROM system.local`).Exec(); err == nil {
 			log.Printf("Try %d: Successfully connected to %v", try, ip)
 			return c, session, nil
 		}
-		log.Println(err)
 		log.Printf("Try %d: Could not set up Cassandra container: %v", try, err)
 
 	}
