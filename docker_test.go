@@ -12,7 +12,7 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/mattbaird/elastigo/lib"
-	. "github.com/ory-am/dockertest"
+	. "github.com/netf/dockertest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -66,6 +66,19 @@ func TestOpenRedisContainerConnection(t *testing.T) {
 	assert.Equal(t, "Hello, World!", v)
 
 	defer client.Close()
+}
+
+func TestOpenCassandraContainerConnection(t *testing.T) {
+	c, session, err := OpenCassandraContainerConnection(15, time.Millisecond*500)
+	require.Nil(t, err)
+	defer c.KillRemove()
+	require.NotNil(t, session)
+
+	v, err := session.Cmd("echo", "Hello, World!").Str()
+	require.Nil(t, err)
+	assert.Equal(t, "Hello, World!", v)
+
+	defer session.Close()
 }
 
 func TestOpenNSQLookupdContainerConnection(t *testing.T) {

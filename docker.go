@@ -32,6 +32,7 @@ import (
 	"math/rand"
 	"regexp"
 
+	"github.com/gocql/gocql"
 	"github.com/mattbaird/elastigo/lib"
 	"github.com/mediocregopher/radix.v2/redis"
 	"github.com/pborman/uuid"
@@ -294,6 +295,21 @@ func SetupRedisContainer() (c ContainerID, ip string, port int, err error) {
 	return
 }
 
+// SetupCassandraContainer sets up a real Cassandra instance for testing purposes
+// using a Docker container. It returns the container ID and its IP address,
+// or makes the test fail on error.
+func SetupCassandraContainer() (c ContainerID, ip string, port int, err error) {
+	port = randInt(1024, 49150)
+	forward := fmt.Sprintf("%d:%d", port, 9042)
+	if BindDockerToLocalhost != "" {
+		forward = "127.0.0.1:" + forward
+	}
+	c, ip, err = setupContainer(cassandraImage, port, 15*time.Second, func() (string, error) {
+		return run("--name", uuid.New(), "-d", "-P", "-p", forward, cassandraImage)
+	})
+	return
+}
+
 // SetupNSQLookupdContainer sets up a real NSQ instance for testing purposes
 // using a Docker container and executing `/nsqlookupd`. It returns the container ID and its IP address,
 // or makes the test fail on error.
@@ -459,6 +475,32 @@ func OpenRedisContainerConnection(tries int, delay time.Duration) (c ContainerID
 		log.Printf("Try %d: Could not set up Redis container: %v", try, err)
 	}
 	return c, nil, errors.New("Could not set up Redis container.")
+}
+
+// OpenCassandraContainerConnection ...
+func OpenCassandraContainerConnection(tries int, delay time.Duration) (c ContainerID, session *gocql.Session, err error) {
+	c, ip, port, err := SetupCassandraContainer()
+	if err != nil {
+		return c, nil, fmt.Errorf("Could not set up Cassandra container: %v", err)
+	}
+
+	for try := 0; try <= tries; try++ {
+		time.Sleep(delay)
+		node := fmt.Sprintf("%s:%d", ip, port)
+		log.Printf("Try %d: Connecting %s", try, node)
+
+		cluster := gocql.NewCluster(ip)
+		cluster.Keyspace = "keyspace1"
+		cluster.Consistency = gocql.Quorum
+		session, err := cluster.CreateSession()
+		if err == nil {
+			log.Printf("Try %d: Successfully connected to %v", try, ip)
+			return c, session, nil
+		}
+		log.Printf("Try %d: Could not set up Redis container: %v", try, err)
+
+	}
+	return c, nil, errors.New("Could not set up Cassandra container.")
 }
 
 // OpenNSQLookupdContainerConnection is supported for legacy reasons. Don't use it.

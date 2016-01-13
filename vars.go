@@ -26,6 +26,7 @@ const (
 	elasticsearchImage = "elasticsearch"
 	redisImage         = "redis"
 	nsqImage           = "nsqio/nsq"
+	cassandraImage     = "cassandra:2.1"
 
 	// MySQLUsername must be passed as username when connecting to mysql
 	MySQLUsername = "root"
