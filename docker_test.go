@@ -2,7 +2,6 @@ package dockertest_test
 
 import (
 	"database/sql"
-	. "dockertest"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,8 +9,8 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/netf/dockertest"
 	"gopkg.in/mgo.v2"
-	// . "github.com/netf/dockertest"
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/mattbaird/elastigo/lib"
