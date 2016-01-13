@@ -1,22 +1,15 @@
 package dockertest_test
 
 import (
-	"database/sql"
-	"fmt"
-	"net/http"
-	"strings"
+	"log"
 	"testing"
 	"time"
 
-	"gopkg.in/mgo.v2"
-
-	"github.com/garyburd/redigo/redis"
-	"github.com/mattbaird/elastigo/lib"
 	. "github.com/netf/dockertest"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+/*
 func TestOpenPostgreSQLContainerConnection(t *testing.T) {
 	c, db, err := OpenPostgreSQLContainerConnection(15, time.Millisecond*500)
 	require.Nil(t, err)
@@ -68,19 +61,24 @@ func TestOpenRedisContainerConnection(t *testing.T) {
 	defer client.Close()
 }
 
+*/
 func TestOpenCassandraContainerConnection(t *testing.T) {
 	c, session, err := OpenCassandraContainerConnection(15, time.Millisecond*500)
 	require.Nil(t, err)
 	defer c.KillRemove()
 	require.NotNil(t, session)
 
-	v, err := session.Cmd("echo", "Hello, World!").Str()
+	if err := session.Query(`INSERT INTO greeting (text) VALUES (?)`,
+		"hello world").Exec(); err != nil {
+		log.Fatal(err)
+	}
 	require.Nil(t, err)
-	assert.Equal(t, "Hello, World!", v)
+	// assert.Equal(t, "Hello, World!", v)
 
 	defer session.Close()
 }
 
+/*
 func TestOpenNSQLookupdContainerConnection(t *testing.T) {
 
 	c, ip, tcpPort, httpPort, err := OpenNSQLookupdContainerConnection(15, time.Millisecond*500)
@@ -215,3 +213,4 @@ func TestConnectToNSQd(t *testing.T) {
 	require.Nil(t, err)
 	defer c.KillRemove()
 }
+*/

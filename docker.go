@@ -497,7 +497,8 @@ func OpenCassandraContainerConnection(tries int, delay time.Duration) (c Contain
 			log.Printf("Try %d: Successfully connected to %v", try, ip)
 			return c, session, nil
 		}
-		log.Printf("Try %d: Could not set up Redis container: %v", try, err)
+		log.Println(err)
+		log.Printf("Try %d: Could not set up Cassandra container: %v", try, err)
 
 	}
 	return c, nil, errors.New("Could not set up Cassandra container.")
